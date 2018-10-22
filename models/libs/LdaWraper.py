@@ -72,7 +72,7 @@ class LDA_wrapper():
     def lda_vis(self, lda_model, data_vectorized, vectorizer):
 
         pyLDAvis.enable_notebook()
-        vis = pyLDAvis.sklearn.prepare(lda_model, data_vectorized, vectorizer, mds='tsne')
+        vis = pyLDAvis.sklearn.prepare(lda_model, data_vectorized, vectorizer, mds='tsne', sort = False)
         return vis
 
     def topic_keyowrd_matrix(self, lda_model, vectorizer):
