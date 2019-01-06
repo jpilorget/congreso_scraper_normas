@@ -11,11 +11,11 @@ for (i in seq_along(paquetes)) {
 theme_set(theme_minimal())
 
 #Cargo las bases
-firmantes <- read_csv("../data_estatica/proyectos_congreso_firmantes.csv")
-dip_giros <- read_csv("../data_estatica/proyectos_congreso_giros_diputados.csv")
-sen_giros <- read_csv("../data_estatica/proyectos_congreso_giros_senado.csv")
-expedientes <- read_csv("../data_estatica/proyectos_congreso_expedientes.csv")
-tramites <- read_csv("../data_estatica/proyectos_congreso_tramites.csv")
+firmantes <- read_csv("data_estatica/proyectos_congreso_firmantes.csv")
+dip_giros <- read_csv("data_estatica/proyectos_congreso_giros_diputados.csv")
+sen_giros <- read_csv("data_estatica/proyectos_congreso_giros_senado.csv")
+expedientes <- read_csv("data_estatica/proyectos_congreso_expedientes.csv")
+tramites <- read_csv("data_estatica/proyectos_congreso_tramites.csv")
 
 ## ANALISIS EXPEDIENTES ####
 expedientes <- 
@@ -171,9 +171,11 @@ dip_giros %>%
   gather(date_type, task_date, -giro_a_comision) %>% 
   ungroup() %>% 
   ggplot(aes(x=giro_a_comision, y=as.Date(task_date, format = '%Y'))) + 
-  geom_line(size=6) + 
+  geom_line() + 
   guides(colour=guide_legend(title=NULL)) +
-  labs(x="", y="") + coord_flip() +
+  labs(x="", y="", title = "Duración de las comisiones en Diputados", 
+       subtitle = "Creadas después de 1999") + 
+  coord_flip() +
   scale_y_date(date_breaks="1 year", date_labels = "%Y") +
   theme_gantt()
   
@@ -188,8 +190,33 @@ sen_giros %>%
   gather(date_type, task_date, -giro_a_comision) %>% 
   ungroup() %>% 
   ggplot(aes(x=giro_a_comision, y=as.Date(task_date, format = '%Y'))) + 
-  geom_line(size=6) + 
+  geom_line() + 
   guides(colour=guide_legend(title=NULL)) +
-  labs(x="", y="") + coord_flip() +
+  labs(x="", y="", title = "Duración de las comisiones en Senado", 
+       subtitle = "Creadas después de 1999") + 
+  coord_flip() +
   scale_y_date(date_breaks="1 year", date_labels = "%Y") +
   theme_gantt()
+
+#Proyectos por Cámara y cantidad de personas
+firmantes %>% 
+  left_join(expedientes, by = c("expediente", "tipo", "titulo")) %>% 
+  filter(!(firmante %in% c("H CAMARA DE DIPUTADOS", "PARLAMENTARIA MIXTA REVISORA DE CUENTAS"))) %>%
+  filter(!(iniciado_en %in% c("1", "cDiputados"))) %>% 
+  group_by(expediente, iniciado_en) %>% 
+  summarise(n = n()) %>% 
+  ggplot(aes(n, colour = iniciado_en)) +
+  stat_ecdf() +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(title = "Proyectos según cantidad de firmantes y Cámara de origen",
+       x = "Firmantes", y = "% proyectos", colour = "Cámara \n de origen")
+
+grafo_firmantes <- firmantes %>% 
+  mutate(firmante2 = firmante) %>% 
+  select(expediente, firmante, firmante2) %>% 
+  group_by(expediente) %>% 
+  filter(n() > 1) %>% 
+  expand(firmante, firmante2) %>% 
+  filter(firmante != firmante2) %>% 
+  select(-expediente)
